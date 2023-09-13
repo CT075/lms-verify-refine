@@ -1,9 +1,17 @@
 #include <limits.h>
 /*@
-requires (x0<10);
 assigns \nothing;
 ensures (\result<10);
 */
-int id(int  x0) {
-  return x0;
+int foo(int  x0) {
+  int x3 = x0 < 10;
+  int x6;
+  if (x3) {
+    /*@assert x3;*/
+    x6 = x0;
+  } else {
+    x6 = 9;
+  }
+  /*@assert (((x3) ? (x0) : (9))<10);*/
+  return x6;
 }
