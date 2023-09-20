@@ -55,11 +55,18 @@ class LeftPadTests extends TestSuite {
       dst.a.reflectMutableInput
       val n = dst.length
       val l = src.length
+      val p = n - l
+      requires(n >= l)
+      ensures((result: Rep[Unit]) =>
+        dsl.forall{i: Rep[Int] => {
+          ((0 <= i && i < p) ==> (dst(i) deep_equal c)) &&
+          ((p <= i && i < n) ==> (src(i-p) deep_equal dst(i)))
+        }})
+      dst.a.reflectMutableInput
       if (n > l) {
-        val p = n - l;
-        for (i <- 0 until l) {
+        for (i <- 0 until l+1) {
           loop_assigns(list_new(i::dst.a.within(p until n)))
-          //loop_invariant(dst.slice(p,p+i-1).equals(src.slice(0,i-1)))
+          loop_invariant(dst.slice(p,p+i-1).equals(src.slice(0,i-1)))
           dst.a(p+i) = src(i)
         }
         for (i <- 0 until p) {
@@ -81,6 +88,6 @@ class LeftPadTests extends TestSuite {
       implicit def eq = equality[Rep[Int]](_ == _)
       mk[Rep[Int]]
     }
-    //check("1", (new LP1 with Impl).code)
+    check("1", (new LP1 with Impl).code)
   }
 }
