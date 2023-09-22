@@ -17,11 +17,10 @@ void leftpad(int c, int *src, size_t l, int *dst, size_t n) {
     for (size_t x = 0; x < l; x++) {
       //@ assert loop_inv_entry: \forall integer i; 0 <= i < x ==> dst[i+p] == src[i];
       dst[x+p] = src[x];
-      // Cam: I don't understand why it can't prove this.
-      //@ assert prev_loop_inv_after_assign: \forall integer i; 0 <= i < x ==> dst[i+p] == src[i];
+      //@ assert loop_inv_exit: \forall integer i; 0 <= i < x ==> dst[i+p] == src[i];
     }
 
-    //@ assert dst_copy_all: \forall integer i; p <= i < n ==> dst[i] == src[i-p];
+    //@ assert dst_copy_all1: \forall integer i; p <= i < n ==> dst[i] == src[i-p];
 
     /*@ loop assigns x, dst[0..p];
         loop invariant x_range_2: 0 <= x <= p;
@@ -32,6 +31,7 @@ void leftpad(int c, int *src, size_t l, int *dst, size_t n) {
       dst[x] = c;
     }
 
+    //@ assert dst_copy_all2: \forall integer i; p <= i < n ==> dst[i] == src[i-p];
     //@ assert dst_pad_all: \forall integer i; 0 <= i < p ==> dst[i] == c;
   }
 }
