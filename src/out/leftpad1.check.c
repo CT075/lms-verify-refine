@@ -14,42 +14,36 @@ int eq_Int(int  x0, int  x1) {
 requires ((inv_vec_Int(x20,x21) &&
 inv_vec_Int(x22,x23)) &&
 (x23>=x21));
+requires \separated(x20+(0..x21-1), x22+(0..x23-1));
 ensures ((inv_vec_Int(x20,x21) &&
 inv_vec_Int(x22,x23)) &&
-(\forall int  x88; ((((0<=x88) &&
-(x88<(x23-x21))) ==> eq_Int(x22[x88],x19)) &&
-((((x23-x21)<=x88) &&
-(x88<x23)) ==> eq_Int(x20[(x88-(x23-x21))],x22[x88])))));
+(\forall int  x76; ((((0<=x76) &&
+(x76<(x23-x21))) ==> eq_Int(x22[x76],x19)) &&
+((((x23-x21)<=x76) &&
+(x76<x23)) ==> eq_Int(x22[x76],x20[(x76-(x23-x21))])))));
 */
 void leftpad(int  x19, int  * x20, int  x21, int  * x22, int  x23) {
-  int x26 = x23 > x21;
-  if (x26) {
-    int x27 = x21 + 1;
-    int x25 = x23 - x21;
-    /*@
-    loop invariant 0<=x29<=x27;
-    loop invariant (((((x25+x29)-1)-x25)==(x29-1)) &&
-    (\forall int  x39; (((0<=x39) &&
-    (x39<(((x25+x29)-1)-x25))) ==> eq_Int(x22[(x25+x39)],x20[x39]))));
-    loop assigns x29, x22[(x25..x23-1)];
-    loop variant x27-x29;
-    */
-    for(int x29=0; x29 < x27; x29++) {
-      int x51 = x20[x29];
-      x22[x34] = x51;
-    }
-    int x70 = x25 - 1;
-    /*@
-    loop invariant 0<=x56<=x25;
-    loop invariant (\forall int  x61; (((0<=x61) &&
-    (x61<(x56-1))) ==> eq_Int(x22[x61],x19)));
-    loop assigns x56, x22[(0..x25-1)];
-    loop variant x25-x56;
-    */
-    for(int x56=0; x56 < x25; x56++) {
-      int x71 = x70 - x56;
-      x22[x71] = x19;
-    }
-  } else {
+  int x25 = x23 - x21;
+  /*@
+  loop invariant 0<=x27<=x21;
+  loop invariant (\forall int  x32; (((0<=x32) &&
+  (x32<x27)) ==> eq_Int(x22[(x32+x25)],x20[x32])));
+  loop assigns x27, x22[(x25..x23-1)];
+  loop variant x21-x27;
+  */
+  for(int x27=0; x27 < x21; x27++) {
+    int x43 = x27 + x25;
+    int x44 = x20[x27];
+    x22[x43] = x44;
+  }
+  /*@
+  loop invariant 0<=x49<=x25;
+  loop invariant (\forall int  x53; (((0<=x53) &&
+  (x53<x49)) ==> eq_Int(x22[x53],x19)));
+  loop assigns x49, x22[(0..x25-1)];
+  loop variant x25-x49;
+  */
+  for(int x49=0; x49 < x25; x49++) {
+    x22[x49] = x19;
   }
 }

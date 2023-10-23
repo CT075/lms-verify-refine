@@ -60,20 +60,20 @@ class LeftPadTests extends TestSuite {
       ensures((result: Rep[Unit]) =>
         dsl.forall{i: Rep[Int] => {
           ((0 <= i && i < p) ==> (dst(i) deep_equal c)) &&
-          ((p <= i && i < n) ==> (src(i-p) deep_equal dst(i)))
+          ((p <= i && i < n) ==> (dst(i) deep_equal src(i-p)))
         }})
       dst.a.reflectMutableInput
-      if (n > l) {
-        for (i <- 0 until l+1) {
-          loop_assigns(list_new(i::dst.a.within(p until n)))
-          loop_invariant(dst.slice(p,p+i-1).equals(src.slice(0,i-1)))
-          dst.a(p+i) = src(i)
-        }
-        for (i <- 0 until p) {
-          loop_assigns(list_new(i::dst.a.within(0 until p)))
-          loop_invariant(dst.slice(0,i-1).forall{x => x deep_equal c})
-          dst.a(p-1-i) = c;
-        }
+      for (i <- 0 until l) {
+        loop_assigns(list_new(i::dst.a.within(p until n)))
+        loop_invariant(dsl.forall{x: Rep[Int] => {
+          ((0 <= x && x < i) ==> (dst(x+p) deep_equal src(x)))
+        }})
+        dst.a(i+p) = src(i)
+      }
+      for (i <- 0 until p) {
+        loop_assigns(list_new(i::dst.a.within(0 until p)))
+        loop_invariant(dst.slice(0,i).forall{x => x deep_equal c})
+        dst.a(i) = c;
       }
 
       unit(())

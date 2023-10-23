@@ -96,7 +96,6 @@ class RefineTestBasic extends TestSuite {
       }
     }
 
-<<<<<<< Updated upstream
     def weaken[A: Manifest, P <: Predicate[A], Q <: Predicate[A]](
       x: Refined[A, P],
       f: Proof[P] => Proof[Q]

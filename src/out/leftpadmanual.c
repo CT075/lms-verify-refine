@@ -1,8 +1,8 @@
 #include "stdlib.h"
 
-/*@ requires \valid(src + (0..l));
-    requires \valid(dst + (0..n));
-    requires \separated(src+(0..l), dst+(0..n)) && n >= l;
+/*@ requires \valid(src + (0..l-1));
+    requires \valid(dst + (0..n-1));
+    requires \separated(src+(0..l-1), dst+(0..n-1)) && n >= l;
 
     ensures \let p = n-l; \forall integer i; (
       (0 <= i < p ==> dst[i] == c) &&
