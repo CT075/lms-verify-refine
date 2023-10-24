@@ -51,6 +51,54 @@ class LeftPadTests extends TestSuite {
     }
     def infix_slice[T:Eq:Iso](v: Vec[T], i: Rep[Int], j: Rep[Int]) = VecRange(v, i, j)
 
+    def leftpadManual[A:Iso:Eq](c: A, src: Vec[A], dst: Vec[A]): Rep[Unit] = {
+      dst.a.reflectMutableInput
+      val n = dst.length
+      val l = src.length
+      val p = n - l
+      requires(n >= l)
+      ensures((result: Rep[Unit]) =>
+        dsl.forall{i: Rep[Int] => {
+          ((0 <= i && i < p) ==> (dst(i) deep_equal c)) &&
+          ((p <= i && i < n) ==> (dst(i) deep_equal src(i-p)))
+        }})
+      dst.a.reflectMutableInput
+
+      for (i <- 0 until l) {
+        loop_assigns(list_new(i::dst.a.within(p until n)))
+        loop_invariant(dsl.forall{x: Rep[Int] => {
+          ((0 <= x && x < i) ==> (dst(x+p) deep_equal src(x)))
+        }})
+
+        dst.a(i+p) = src(i)
+      }
+      for (i <- 0 until p) {
+        loop_assigns(list_new(i::dst.a.within(0 until p)))
+        loop_invariant(dst.slice(0,i).forall{x => x deep_equal c})
+        dst.a(i) = c;
+      }
+
+      unit(())
+    }
+
+    trait Proof {
+      def reify(): Rep[Boolean]
+    }
+
+    def liftMutableAssign[A:Eq](cell: A, vl: A): Proof = new Proof {
+      def reify() = cell deep_equal vl
+    }
+
+    // TODO: return P as well
+    def forAll[P <: Proof](r: Rep[Range], inv: Rep[Int] => P, body: (Rep[Int], P) => P) = {
+      for (x <- r) {
+        val invW = inv(x)
+        loop_invariant(invW.reify())
+        body(x, invW)
+        unit(())
+      }
+    }
+
     def leftpad[A:Iso:Eq](c: A, src: Vec[A], dst: Vec[A]): Rep[Unit] = {
       dst.a.reflectMutableInput
       val n = dst.length
@@ -63,31 +111,55 @@ class LeftPadTests extends TestSuite {
           ((p <= i && i < n) ==> (dst(i) deep_equal src(i-p)))
         }})
       dst.a.reflectMutableInput
-      for (i <- 0 until l) {
-        loop_assigns(list_new(i::dst.a.within(p until n)))
-        loop_invariant(dsl.forall{x: Rep[Int] => {
+
+      case class CopyInvariant(val i: Rep[Int]) extends Proof {
+        def reify() = dsl.forall{x: Rep[Int] => {
           ((0 <= x && x < i) ==> (dst(x+p) deep_equal src(x)))
-        }})
+        }}
+      }
+
+      forAll[CopyInvariant](0 until l, CopyInvariant.apply, {(i: Rep[Int], pf: CopyInvariant) =>
+        loop_assigns(list_new(i::dst.a.within(p until n)))
         dst.a(i+p) = src(i)
+        // TODO: join with the lifted assign above
+        pf
+      })
+
+      case class PadInvariant(val i: Rep[Int]) extends Proof {
+        def reify() = dsl.forall{x: Rep[Int] => {
+          ((0 <= x && x < i) ==> (dst(x) deep_equal c))
+        }}
       }
-      for (i <- 0 until p) {
+
+      forAll[PadInvariant](0 until p, PadInvariant.apply, {(i: Rep[Int], pf: PadInvariant) =>
         loop_assigns(list_new(i::dst.a.within(0 until p)))
-        loop_invariant(dst.slice(0,i).forall{x => x deep_equal c})
-        dst.a(i) = c;
-      }
+        dst.a(i) = c
+        pf
+      })
 
       unit(())
     }
+
+    def mkManual[A:Iso:Eq] =
+      toplevel("leftpadManual", {(c: A, src:Vec[A], dst:Vec[A]) => leftpadManual(c,src,dst)})
 
     def mk[A:Iso:Eq] =
       toplevel("leftpad", {(c: A, src:Vec[A], dst:Vec[A]) => leftpad(c,src,dst)})
   }
 
-  test("1") {
-    trait LP1 extends LeftPadder {
+  test("manual") {
+    trait LPManual extends LeftPadder {
+      implicit def eq = equality[Rep[Int]](_ == _)
+      mkManual[Rep[Int]]
+    }
+    check("manual", (new LPManual with Impl).code)
+  }
+
+  test("witnessed") {
+    trait LPWitness extends LeftPadder {
       implicit def eq = equality[Rep[Int]](_ == _)
       mk[Rep[Int]]
     }
-    check("1", (new LP1 with Impl).code)
+    check("witnessed", (new LPWitness with Impl).code)
   }
 }
