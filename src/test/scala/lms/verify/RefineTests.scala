@@ -205,6 +205,57 @@ class RefineTestBasic extends TestSuite {
     check("2", (new Ex2 with Impl).code)
   }
 
+  test("3") {
+    trait Ex3 extends Dsl with DataOps {
+      trait Prop {
+        def reify(): Rep[Boolean]
+      }
+
+      trait Proved {
+        def emit(): Rep[Unit]
+      }
+
+      abstract class xLT5(x: Rep[Int]) extends Prop {
+        def reify() = x < 5
+      }
+
+      abstract class xLT10(x: Rep[Int]) extends Prop {
+        def reify() = x < 10
+      }
+
+      case class Assert_xLT5(x: Rep[Int]) extends xLT5(x) with Proved {
+        def emit() = _assert(reify())
+      }
+
+      def requireAndEnsure
+          [A, B, P <: Prop, Q <: Prop]
+          (f: (Rep[A], P with Proved) => (Rep[B], Q with Proved)):
+          (Rep[A], P with Proved) => (Rep[B], Q with Proved) =
+      {
+        def wrapped(x: Rep[A], pre: P with Proved): (Rep[B], Q with Proved) = {
+          requires(pre.reify())
+          val (result, post) = f(x, pre)
+          ensures((_: Rep[_]) => post.reify())
+          return (result, post)
+        }
+        wrapped
+      }
+
+      def weaken(p: xLT5): xLT10 = new xLT10 with Proved {
+        def emit() = {
+          p.emit()
+          _assert(unit(5) < unit(10))
+        }
+      }
+
+      def id(x: Rep[Int], pre: xLT5): (Rep[Int], xLT10) = (x, weaken(pre))
+
+      toplevel("foo", requireAndEnsure[Int, Int, xLT5, xLT10](id)_)
+    }
+
+    check("3", (new Ex3 with Impl).code)
+  }
+
   /*
   // CR cam: need to extend the logic combinators to work with predicates
   test("3") {
