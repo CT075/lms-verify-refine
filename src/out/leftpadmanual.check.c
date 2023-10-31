@@ -22,7 +22,7 @@ inv_vec_Int(x22,x23)) &&
 ((((x23-x21)<=x76) &&
 (x76<x23)) ==> eq_Int(x22[x76],x20[(x76-(x23-x21))])))));
 */
-void leftpad(int  x19, int  * x20, int  x21, int  * x22, int  x23) {
+void leftpadManual(int  x19, int  * x20, int  x21, int  * x22, int  x23) {
   int x25 = x23 - x21;
   /*@
   loop invariant 0<=x27<=x21;
