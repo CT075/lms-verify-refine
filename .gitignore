@@ -1,6 +1,6 @@
 .bloop
 .metals
 .bsp
-src/out/live_playground.actual.c
 project/
 target/
+src/out/*.actual.c
